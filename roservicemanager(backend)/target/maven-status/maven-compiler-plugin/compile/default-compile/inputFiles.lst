@@ -1,0 +1,17 @@
+C:\Users\crvis\OneDrive\Desktop\vs_workspace\RO CRM(dikshant)\roservicemanager\src\main\java\com\vc\roservicemanager\auth\config\JwtProperties.java
+C:\Users\crvis\OneDrive\Desktop\vs_workspace\RO CRM(dikshant)\roservicemanager\src\main\java\com\vc\roservicemanager\auth\controller\AuthenticationController.java
+C:\Users\crvis\OneDrive\Desktop\vs_workspace\RO CRM(dikshant)\roservicemanager\src\main\java\com\vc\roservicemanager\auth\dto\LoginRequest.java
+C:\Users\crvis\OneDrive\Desktop\vs_workspace\RO CRM(dikshant)\roservicemanager\src\main\java\com\vc\roservicemanager\auth\dto\LoginResponse.java
+C:\Users\crvis\OneDrive\Desktop\vs_workspace\RO CRM(dikshant)\roservicemanager\src\main\java\com\vc\roservicemanager\auth\dto\UserDetailsResponse.java
+C:\Users\crvis\OneDrive\Desktop\vs_workspace\RO CRM(dikshant)\roservicemanager\src\main\java\com\vc\roservicemanager\auth\entity\BaseEntity.java
+C:\Users\crvis\OneDrive\Desktop\vs_workspace\RO CRM(dikshant)\roservicemanager\src\main\java\com\vc\roservicemanager\auth\entity\Role.java
+C:\Users\crvis\OneDrive\Desktop\vs_workspace\RO CRM(dikshant)\roservicemanager\src\main\java\com\vc\roservicemanager\auth\entity\User.java
+C:\Users\crvis\OneDrive\Desktop\vs_workspace\RO CRM(dikshant)\roservicemanager\src\main\java\com\vc\roservicemanager\auth\repository\UserRepository.java
+C:\Users\crvis\OneDrive\Desktop\vs_workspace\RO CRM(dikshant)\roservicemanager\src\main\java\com\vc\roservicemanager\auth\security\AuthenticatedUser.java
+C:\Users\crvis\OneDrive\Desktop\vs_workspace\RO CRM(dikshant)\roservicemanager\src\main\java\com\vc\roservicemanager\auth\security\CustomUserDetailsService.java
+C:\Users\crvis\OneDrive\Desktop\vs_workspace\RO CRM(dikshant)\roservicemanager\src\main\java\com\vc\roservicemanager\auth\security\JwtAuthenticationFilter.java
+C:\Users\crvis\OneDrive\Desktop\vs_workspace\RO CRM(dikshant)\roservicemanager\src\main\java\com\vc\roservicemanager\auth\security\SecurityConfig.java
+C:\Users\crvis\OneDrive\Desktop\vs_workspace\RO CRM(dikshant)\roservicemanager\src\main\java\com\vc\roservicemanager\auth\service\AuthenticationService.java
+C:\Users\crvis\OneDrive\Desktop\vs_workspace\RO CRM(dikshant)\roservicemanager\src\main\java\com\vc\roservicemanager\auth\service\AuthenticationServiceImpl.java
+C:\Users\crvis\OneDrive\Desktop\vs_workspace\RO CRM(dikshant)\roservicemanager\src\main\java\com\vc\roservicemanager\auth\service\JwtService.java
+C:\Users\crvis\OneDrive\Desktop\vs_workspace\RO CRM(dikshant)\roservicemanager\src\main\java\com\vc\roservicemanager\RoservicemanagerApplication.java

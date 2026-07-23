@@ -1,0 +1,36 @@
+spring:
+  application:
+    name: roservicemanager
+
+  datasource:
+    url: jdbc:postgresql://localhost:5432/ro_service_manager
+    username: postgres
+    password: postgres
+
+  jpa:
+    hibernate:
+      ddl-auto: validate
+
+    open-in-view: false
+
+    show-sql: true
+
+    properties:
+      hibernate:
+        format_sql: true
+
+        jdbc:
+          time_zone: UTC
+
+  flyway:
+    enabled: true
+
+jwt:
+  secret: odguQOy24rlTUQZrTVC/wFYG9YosV7GSppt1bEG6j6M=
+  expiration: 28800000
+
+logging:
+  level:
+    org.springframework.security: DEBUG
+    org.hibernate.SQL: DEBUG
+    org.hibernate.orm.jdbc.bind: TRACE
