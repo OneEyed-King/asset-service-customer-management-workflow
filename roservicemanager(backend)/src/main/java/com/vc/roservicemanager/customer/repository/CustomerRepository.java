@@ -12,19 +12,26 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
+/**
+ * Every finder here takes tenantId explicitly and filters by it - this is
+ * the actual mechanism that keeps one business's customers invisible to
+ * another. There's no "findById" without a tenant check anywhere in this
+ * repository on purpose.
+ */
 @Repository
 public interface CustomerRepository
         extends JpaRepository<Customer, UUID> {
 
-    Optional<Customer> findByIdAndActiveTrue(UUID id);
+    Optional<Customer> findByIdAndActiveTrueAndTenantId(UUID id, UUID tenantId);
 
-    Page<Customer> findByActiveTrue(Pageable pageable);
+    Page<Customer> findByActiveTrueAndTenantId(UUID tenantId, Pageable pageable);
 
     @Query(
             value = """
                     SELECT *
                     FROM customers
                     WHERE active = true
+                      AND tenant_id = :tenantId
                       AND (
                             name ILIKE CONCAT('%', :search, '%')
                             OR contact_number LIKE CONCAT('%', :search, '%')
@@ -35,6 +42,7 @@ public interface CustomerRepository
                     SELECT COUNT(*)
                     FROM customers
                     WHERE active = true
+                      AND tenant_id = :tenantId
                       AND (
                             name ILIKE CONCAT('%', :search, '%')
                             OR contact_number LIKE CONCAT('%', :search, '%')
@@ -43,6 +51,7 @@ public interface CustomerRepository
             nativeQuery = true
     )
     Page<Customer> searchCustomers(
+            @Param("tenantId") UUID tenantId,
             @Param("search") String search,
             Pageable pageable
     );
@@ -52,6 +61,7 @@ public interface CustomerRepository
                     SELECT *
                     FROM customers
                     WHERE active = true
+                      AND tenant_id = :tenantId
                       AND (
                             name ILIKE CONCAT('%', :search, '%')
                             OR contact_number LIKE CONCAT('%', :search, '%')
@@ -62,6 +72,7 @@ public interface CustomerRepository
             nativeQuery = true
     )
     List<Customer> autoComplete(
+            @Param("tenantId") UUID tenantId,
             @Param("search") String search,
             @Param("limit") int limit
     );

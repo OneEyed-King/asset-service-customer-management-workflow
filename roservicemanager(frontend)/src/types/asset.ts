@@ -1,10 +1,21 @@
-export type AssetType = "RO" | "WATER_PURIFIER" | "SOFTENER" | "OTHER";
-export type AssetSource = "SOLD" | "CUSTOMER_OWNED" | "AMC";
-export type PaymentStatus = "PAID" | "PARTIAL" | "PENDING";
+/**
+ * These match the backend's actual Java enums
+ * (com.vc.roservicemanager.common.enums.*) exactly - confirmed by reading
+ * the enum source files, not guessed.
+ */
+export type AssetType = "RO" | "CHIMNEY" | "AC" | "WATER_SOFTENER" | "SPARE_PART" | "OTHER";
+export type AssetSource = "SOLD" | "SERVICE_ONLY";
+export type PaymentStatus = "PAID" | "PARTIAL" | "UNPAID";
 
+/**
+ * Matches backend CustomerAssetDto exactly. Note there is no "active"
+ * field (same as Customer), and the backend includes a denormalized
+ * `customerName` for display convenience.
+ */
 export interface CustomerAsset {
   id: string;
   customerId: string;
+  customerName: string;
   name: string;
   brand: string;
   assetType: AssetType;
@@ -20,9 +31,11 @@ export interface CustomerAsset {
   nextServiceDate?: string | null;
   installationLocation?: string | null;
   notes?: string | null;
-  active: boolean;
 }
 
+/**
+ * Matches backend CustomerAssetRequest exactly.
+ */
 export interface CustomerAssetRequest {
   customerId: string;
   name: string;

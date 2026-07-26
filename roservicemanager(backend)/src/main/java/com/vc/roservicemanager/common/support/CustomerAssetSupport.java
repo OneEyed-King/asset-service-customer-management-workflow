@@ -1,5 +1,6 @@
 package com.vc.roservicemanager.common.support;
 
+import com.vc.roservicemanager.auth.security.CurrentTenantProvider;
 import com.vc.roservicemanager.customerasset.entity.CustomerAsset;
 import com.vc.roservicemanager.customerasset.repository.CustomerAssetRepository;
 import lombok.RequiredArgsConstructor;
@@ -12,10 +13,13 @@ import java.util.UUID;
 public class CustomerAssetSupport {
 
     private final CustomerAssetRepository repository;
+    private final CurrentTenantProvider currentTenantProvider;
 
     public CustomerAsset getActiveAsset(UUID id) {
 
-        return repository.findByIdAndActiveTrue(id)
+        UUID tenantId = currentTenantProvider.getTenantId();
+
+        return repository.findByIdAndActiveTrueAndTenantId(id, tenantId)
                 .orElseThrow(() ->
                         new RuntimeException("Asset not found"));
     }

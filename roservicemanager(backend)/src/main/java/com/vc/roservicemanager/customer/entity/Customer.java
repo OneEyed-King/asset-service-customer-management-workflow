@@ -1,6 +1,7 @@
 package com.vc.roservicemanager.customer.entity;
 
 import com.vc.roservicemanager.common.entity.BaseEntity;
+import com.vc.roservicemanager.tenant.entity.Tenant;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -12,6 +13,10 @@ import lombok.*;
 @AllArgsConstructor
 @Builder
 public class Customer extends BaseEntity {
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "tenant_id", nullable = false)
+    private Tenant tenant;
 
     @Column(nullable = false,length = 100)
     private String name;

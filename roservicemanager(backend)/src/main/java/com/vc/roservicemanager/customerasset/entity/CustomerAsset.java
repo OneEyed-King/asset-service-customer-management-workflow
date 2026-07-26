@@ -5,6 +5,7 @@ import com.vc.roservicemanager.common.enums.AssetSource;
 import com.vc.roservicemanager.common.enums.AssetType;
 import com.vc.roservicemanager.common.enums.PaymentStatus;
 import com.vc.roservicemanager.customer.entity.Customer;
+import com.vc.roservicemanager.tenant.entity.Tenant;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -19,6 +20,10 @@ import java.time.LocalDate;
 @AllArgsConstructor
 @Builder
 public class CustomerAsset extends BaseEntity {
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "tenant_id", nullable = false)
+    private Tenant tenant;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "customer_id", nullable = false)

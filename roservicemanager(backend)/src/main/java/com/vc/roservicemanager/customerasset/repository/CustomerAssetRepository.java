@@ -13,12 +13,13 @@ import java.util.UUID;
 public interface CustomerAssetRepository
         extends JpaRepository<CustomerAsset, UUID> {
 
-    Optional<CustomerAsset> findByIdAndActiveTrue(UUID id);
+    Optional<CustomerAsset> findByIdAndActiveTrueAndTenantId(UUID id, UUID tenantId);
 
-    Page<CustomerAsset> findByActiveTrue(Pageable pageable);
+    Page<CustomerAsset> findByActiveTrueAndTenantId(UUID tenantId, Pageable pageable);
 
-    Page<CustomerAsset> findByCustomerIdAndActiveTrue(
+    Page<CustomerAsset> findByCustomerIdAndActiveTrueAndTenantId(
             UUID customerId,
+            UUID tenantId,
             Pageable pageable
     );
 

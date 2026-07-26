@@ -1,5 +1,6 @@
 package com.vc.roservicemanager.customerasset.serviceimpl;
 
+import com.vc.roservicemanager.auth.security.CurrentTenantProvider;
 import com.vc.roservicemanager.customer.entity.Customer;
 import com.vc.roservicemanager.customer.serviceimpl.CustomerFinder;
 import com.vc.roservicemanager.customerasset.dto.CustomerAssetDto;
@@ -7,6 +8,7 @@ import com.vc.roservicemanager.customerasset.dto.CustomerAssetRequest;
 import com.vc.roservicemanager.customerasset.entity.CustomerAsset;
 import com.vc.roservicemanager.customerasset.repository.CustomerAssetRepository;
 import com.vc.roservicemanager.customerasset.service.CustomerAssetService;
+import com.vc.roservicemanager.tenant.entity.Tenant;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -26,6 +28,8 @@ public class CustomerAssetServiceImpl implements CustomerAssetService {
 
     private final CustomerFinder customerFinder;
 
+    private final CurrentTenantProvider currentTenantProvider;
+
     // =========================================================
     // Create
     // =========================================================
@@ -37,9 +41,22 @@ public class CustomerAssetServiceImpl implements CustomerAssetService {
                 request.name(),
                 request.customerId());
 
+        UUID tenantId = currentTenantProvider.getTenantId();
+
+        // customerFinder.get() is already tenant-scoped, so this also
+        // guarantees the asset's parent customer belongs to this tenant.
         Customer customer = customerFinder.get(request.customerId());
 
+        // Reference-only Tenant: Tenant uses a plain Lombok @Builder (not
+        // @SuperBuilder), so its builder doesn't expose the inherited
+        // BaseEntity `id` field. Setting it via the inherited setter gives
+        // JPA just enough of a managed reference to persist the FK without
+        // an extra round-trip to load the full Tenant row.
+        Tenant tenantRef = new Tenant();
+        tenantRef.setId(tenantId);
+
         CustomerAsset asset = CustomerAsset.builder()
+                .tenant(tenantRef)
                 .customer(customer)
                 .name(request.name())
                 .brand(request.brand())
@@ -85,8 +102,10 @@ public class CustomerAssetServiceImpl implements CustomerAssetService {
 
         log.debug("Fetching all assets.");
 
+        UUID tenantId = currentTenantProvider.getTenantId();
+
         return customerAssetRepository
-                .findByActiveTrue(pageable)
+                .findByActiveTrueAndTenantId(tenantId, pageable)
                 .map(this::toDto);
     }
 
@@ -99,11 +118,13 @@ public class CustomerAssetServiceImpl implements CustomerAssetService {
         log.debug("Fetching assets for customer '{}'",
                 customerId);
 
-        // Validate customer exists.
+        UUID tenantId = currentTenantProvider.getTenantId();
+
+        // Validate customer exists and belongs to this tenant.
         customerFinder.get(customerId);
 
         return customerAssetRepository
-                .findByCustomerIdAndActiveTrue(customerId, pageable)
+                .findByCustomerIdAndActiveTrueAndTenantId(customerId, tenantId, pageable)
                 .map(this::toDto);
     }
 
@@ -171,7 +192,9 @@ public class CustomerAssetServiceImpl implements CustomerAssetService {
 
     private CustomerAsset getAsset(UUID id) {
 
-        return customerAssetRepository.findByIdAndActiveTrue(id)
+        UUID tenantId = currentTenantProvider.getTenantId();
+
+        return customerAssetRepository.findByIdAndActiveTrueAndTenantId(id, tenantId)
                 .orElseThrow(() ->
                         new RuntimeException("Asset not found"));
     }

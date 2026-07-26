@@ -1,0 +1,62 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: ro_service_manager_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-ro_service_manager}
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-ro_service_manager}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    networks:
+      - ro_service_manager_net
+
+  backend:
+    build:
+      context: "./roservicemanager(backend)"
+      dockerfile: Dockerfile
+    container_name: ro_service_manager_backend
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB:-ro_service_manager}
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:-postgres}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      JWT_SECRET: ${JWT_SECRET:-odguQOy24rlTUQZrTVC/wFYG9YosV7GSppt1bEG6j6M=}
+      JWT_EXPIRATION: ${JWT_EXPIRATION:-28800000}
+    ports:
+      - "8080:8080"
+    networks:
+      - ro_service_manager_net
+
+  frontend:
+    build:
+      context: "./roservicemanager(frontend)"
+      dockerfile: Dockerfile
+      args:
+        VITE_API_BASE_URL: ${VITE_API_BASE_URL:-http://localhost:8080/api}
+    container_name: ro_service_manager_frontend
+    restart: unless-stopped
+    depends_on:
+      - backend
+    ports:
+      - "5173:80"
+    networks:
+      - ro_service_manager_net
+
+networks:
+  ro_service_manager_net:
+    driver: bridge
+
+volumes:
+  postgres_data:

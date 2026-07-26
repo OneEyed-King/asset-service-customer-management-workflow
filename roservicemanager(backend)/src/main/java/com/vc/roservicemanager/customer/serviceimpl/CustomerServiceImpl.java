@@ -1,11 +1,13 @@
 package com.vc.roservicemanager.customer.serviceimpl;
 
+import com.vc.roservicemanager.auth.security.CurrentTenantProvider;
 import com.vc.roservicemanager.customer.dto.CustomerDto;
 import com.vc.roservicemanager.customer.dto.CustomerRequest;
 import com.vc.roservicemanager.customer.dto.CustomerSearchDto;
 import com.vc.roservicemanager.customer.entity.Customer;
 import com.vc.roservicemanager.customer.repository.CustomerRepository;
 import com.vc.roservicemanager.customer.service.CustomerService;
+import com.vc.roservicemanager.tenant.entity.Tenant;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -23,11 +25,23 @@ import java.util.UUID;
 public class CustomerServiceImpl implements CustomerService {
 
     private final CustomerRepository customerRepository;
+    private final CurrentTenantProvider currentTenantProvider;
 
     @Override
     public CustomerDto create(CustomerRequest request) {
 
+        UUID tenantId = currentTenantProvider.getTenantId();
+
+        // Reference-only Tenant: Tenant uses a plain Lombok @Builder (not
+        // @SuperBuilder), so its builder doesn't expose the inherited
+        // BaseEntity `id` field. Setting it via the inherited setter gives
+        // JPA just enough of a managed reference to persist the FK without
+        // an extra round-trip to load the full Tenant row.
+        Tenant tenantRef = new Tenant();
+        tenantRef.setId(tenantId);
+
         Customer customer = Customer.builder()
+                .tenant(tenantRef)
                 .name(request.name())
                 .contactNumber(request.contactNumber())
                 .alternateContactNumber(request.alternateContactNumber())
@@ -57,12 +71,15 @@ public class CustomerServiceImpl implements CustomerService {
             String search,
             Pageable pageable) {
 
+        UUID tenantId = currentTenantProvider.getTenantId();
+
         Page<Customer> customers;
 
         if (search == null || search.isBlank()) {
-            customers = customerRepository.findByActiveTrue(pageable);
+            customers = customerRepository.findByActiveTrueAndTenantId(tenantId, pageable);
         } else {
             customers = customerRepository.searchCustomers(
+                    tenantId,
                     search.trim(),
                     pageable
             );
@@ -106,7 +123,9 @@ public class CustomerServiceImpl implements CustomerService {
             return List.of();
         }
 
-        return customerRepository.autoComplete(query.trim(), 10)
+        UUID tenantId = currentTenantProvider.getTenantId();
+
+        return customerRepository.autoComplete(tenantId, query.trim(), 10)
                 .stream()
                 .map(customer -> new CustomerSearchDto(
                         customer.getId(),
@@ -132,7 +151,8 @@ public class CustomerServiceImpl implements CustomerService {
     }
 
     private Customer getCustomer(UUID id) {
-        return customerRepository.findByIdAndActiveTrue(id)
+        UUID tenantId = currentTenantProvider.getTenantId();
+        return customerRepository.findByIdAndActiveTrueAndTenantId(id, tenantId)
                 .orElseThrow(() -> new RuntimeException("Customer not found"));
     }
 }

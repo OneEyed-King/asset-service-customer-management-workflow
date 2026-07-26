@@ -7,6 +7,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.UUID;
 
 public class AuthenticatedUser implements UserDetails {
 
@@ -18,6 +19,15 @@ public class AuthenticatedUser implements UserDetails {
 
     public User getUser() {
         return user;
+    }
+
+    /**
+     * The tenant (business) this authenticated user belongs to. This is
+     * what every tenant-scoped query in the app is filtered by - see
+     * CurrentTenantProvider.
+     */
+    public UUID getTenantId() {
+        return user.getTenant().getId();
     }
 
     @Override

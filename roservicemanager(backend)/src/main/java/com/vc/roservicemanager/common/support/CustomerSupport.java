@@ -1,5 +1,6 @@
 package com.vc.roservicemanager.common.support;
 
+import com.vc.roservicemanager.auth.security.CurrentTenantProvider;
 import com.vc.roservicemanager.customer.entity.Customer;
 import com.vc.roservicemanager.customer.repository.CustomerRepository;
 import lombok.RequiredArgsConstructor;
@@ -12,10 +13,13 @@ import java.util.UUID;
 public class CustomerSupport {
 
     private final CustomerRepository repository;
+    private final CurrentTenantProvider currentTenantProvider;
 
     public Customer getActiveCustomer(UUID id) {
 
-        return repository.findByIdAndActiveTrue(id)
+        UUID tenantId = currentTenantProvider.getTenantId();
+
+        return repository.findByIdAndActiveTrueAndTenantId(id, tenantId)
                 .orElseThrow(() ->
                         new RuntimeException("Customer not found"));
     }

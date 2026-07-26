@@ -1,0 +1,6 @@
+target
+.idea
+.git
+.gitignore
+*.md
+HELP.md

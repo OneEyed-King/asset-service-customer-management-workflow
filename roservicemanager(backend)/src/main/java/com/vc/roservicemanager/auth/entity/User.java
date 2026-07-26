@@ -1,6 +1,7 @@
 package com.vc.roservicemanager.auth.entity;
 
 import com.vc.roservicemanager.common.entity.BaseEntity;
+import com.vc.roservicemanager.tenant.entity.Tenant;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -12,6 +13,14 @@ import lombok.*;
 @AllArgsConstructor
 @Builder
 public class User extends BaseEntity {
+
+    /**
+     * The business this user belongs to. Every user belongs to exactly
+     * one tenant - there is no cross-tenant user account today.
+     */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "tenant_id", nullable = false)
+    private Tenant tenant;
 
     @Column(nullable = false, unique = true, length = 50)
     private String username;
