@@ -1,5 +1,7 @@
 package com.vc.roservicemanager.common.support;
 
+import com.vc.roservicemanager.common.exception.ApiException;
+
 import com.vc.roservicemanager.auth.security.CurrentTenantProvider;
 import com.vc.roservicemanager.customer.entity.Customer;
 import com.vc.roservicemanager.customer.repository.CustomerRepository;
@@ -20,8 +22,7 @@ public class CustomerSupport {
         UUID tenantId = currentTenantProvider.getTenantId();
 
         return repository.findByIdAndActiveTrueAndTenantId(id, tenantId)
-                .orElseThrow(() ->
-                        new RuntimeException("Customer not found"));
+                .orElseThrow(() -> ApiException.notFound("Customer not found"));
     }
 
 }

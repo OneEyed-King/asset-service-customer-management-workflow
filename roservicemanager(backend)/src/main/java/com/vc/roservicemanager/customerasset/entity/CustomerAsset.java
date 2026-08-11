@@ -60,8 +60,22 @@ public class CustomerAsset extends BaseEntity {
 
     private String installationLocation;
 
+    // Whether this asset is under a recurring service arrangement (AMC or
+    // otherwise). Only assets with this set to true should carry a
+    // serviceIntervalDays / nextServiceDate - a one-off repair job on
+    // equipment we didn't sell has no reason to force a "service expiry"
+    // reminder on the business.
+    @Builder.Default
+    private boolean underAmc = false;
+
     @Column(columnDefinition = "TEXT")
     private String notes;
 
+    // @Builder.Default is required here - Lombok's plain @Builder ignores
+    // field initializers otherwise, so CustomerAsset.builder().build()
+    // without this would silently save active=false on every new asset
+    // (matches the pattern already used correctly on Customer.active and
+    // User.enabled).
+    @Builder.Default
     private boolean active = true;
 }

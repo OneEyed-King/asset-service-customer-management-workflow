@@ -29,6 +29,13 @@ jwt:
   secret: odguQOy24rlTUQZrTVC/wFYG9YosV7GSppt1bEG6j6M=
   expiration: 28800000
 
+# Dev-only shared secret for POST-ing new tenants/users via
+# /api/platform-admin/**. Override with a real value via the
+# PLATFORM_ADMIN_KEY env var - never rely on this default outside your own
+# machine.
+platform-admin:
+  api-key: ${PLATFORM_ADMIN_KEY:dev-only-change-me}
+
 logging:
   level:
     org.springframework.security: DEBUG

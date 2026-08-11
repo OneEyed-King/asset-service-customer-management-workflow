@@ -26,6 +26,8 @@ public interface CustomerRepository
 
     Page<Customer> findByActiveTrueAndTenantId(UUID tenantId, Pageable pageable);
 
+    long countByActiveTrueAndTenantId(UUID tenantId);
+
     @Query(
             value = """
                     SELECT *

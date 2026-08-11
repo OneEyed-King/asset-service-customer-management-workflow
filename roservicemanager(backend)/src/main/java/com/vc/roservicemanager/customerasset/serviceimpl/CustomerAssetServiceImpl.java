@@ -1,5 +1,7 @@
 package com.vc.roservicemanager.customerasset.serviceimpl;
 
+import com.vc.roservicemanager.common.exception.ApiException;
+
 import com.vc.roservicemanager.auth.security.CurrentTenantProvider;
 import com.vc.roservicemanager.customer.entity.Customer;
 import com.vc.roservicemanager.customer.serviceimpl.CustomerFinder;
@@ -41,6 +43,8 @@ public class CustomerAssetServiceImpl implements CustomerAssetService {
                 request.name(),
                 request.customerId());
 
+        validateDates(request);
+
         UUID tenantId = currentTenantProvider.getTenantId();
 
         // customerFinder.get() is already tenant-scoped, so this also
@@ -69,8 +73,9 @@ public class CustomerAssetServiceImpl implements CustomerAssetService {
                 .purchaseDate(request.purchaseDate())
                 .installationDate(request.installationDate())
                 .warrantyExpiry(request.warrantyExpiry())
-                .serviceIntervalDays(request.serviceIntervalDays())
-                .nextServiceDate(request.nextServiceDate())
+                .underAmc(request.underAmc())
+                .serviceIntervalDays(request.underAmc() ? request.serviceIntervalDays() : null)
+                .nextServiceDate(request.underAmc() ? request.nextServiceDate() : null)
                 .installationLocation(request.installationLocation())
                 .notes(request.notes())
                 .build();
@@ -128,6 +133,19 @@ public class CustomerAssetServiceImpl implements CustomerAssetService {
                 .map(this::toDto);
     }
 
+    @Override
+    @Transactional(readOnly = true)
+    public Page<CustomerAssetDto> getDueForService(Pageable pageable) {
+
+        log.debug("Fetching assets due for service.");
+
+        UUID tenantId = currentTenantProvider.getTenantId();
+
+        return customerAssetRepository
+                .findByActiveTrueAndTenantIdAndUnderAmcTrueAndNextServiceDateIsNotNull(tenantId, pageable)
+                .map(this::toDto);
+    }
+
     // =========================================================
     // Update
     // =========================================================
@@ -138,6 +156,8 @@ public class CustomerAssetServiceImpl implements CustomerAssetService {
             CustomerAssetRequest request) {
 
         log.info("Updating asset '{}'", id);
+
+        validateDates(request);
 
         CustomerAsset asset = getAsset(id);
 
@@ -155,8 +175,9 @@ public class CustomerAssetServiceImpl implements CustomerAssetService {
         asset.setPurchaseDate(request.purchaseDate());
         asset.setInstallationDate(request.installationDate());
         asset.setWarrantyExpiry(request.warrantyExpiry());
-        asset.setServiceIntervalDays(request.serviceIntervalDays());
-        asset.setNextServiceDate(request.nextServiceDate());
+        asset.setUnderAmc(request.underAmc());
+        asset.setServiceIntervalDays(request.underAmc() ? request.serviceIntervalDays() : null);
+        asset.setNextServiceDate(request.underAmc() ? request.nextServiceDate() : null);
         asset.setInstallationLocation(request.installationLocation());
         asset.setNotes(request.notes());
 
@@ -190,13 +211,28 @@ public class CustomerAssetServiceImpl implements CustomerAssetService {
     // Private Helpers
     // =========================================================
 
+    // An asset can't have gone into service before it was sold/purchased -
+    // only checked when both dates are actually supplied, since either one
+    // being blank is valid (e.g. a service-only asset with no purchase
+    // date on file).
+    private void validateDates(CustomerAssetRequest request) {
+
+        if (request.purchaseDate() != null
+                && request.installationDate() != null
+                && request.installationDate().isBefore(request.purchaseDate())) {
+
+            throw ApiException.badRequest(
+                    "Installation date cannot be earlier than purchase date");
+        }
+    }
+
     private CustomerAsset getAsset(UUID id) {
 
         UUID tenantId = currentTenantProvider.getTenantId();
 
         return customerAssetRepository.findByIdAndActiveTrueAndTenantId(id, tenantId)
                 .orElseThrow(() ->
-                        new RuntimeException("Asset not found"));
+                        ApiException.notFound("Asset not found"));
     }
 
     private CustomerAssetDto toDto(CustomerAsset asset) {
@@ -216,6 +252,7 @@ public class CustomerAssetServiceImpl implements CustomerAssetService {
                 asset.getPurchaseDate(),
                 asset.getInstallationDate(),
                 asset.getWarrantyExpiry(),
+                asset.isUnderAmc(),
                 asset.getServiceIntervalDays(),
                 asset.getNextServiceDate(),
                 asset.getInstallationLocation(),

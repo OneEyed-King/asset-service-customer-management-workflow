@@ -38,6 +38,8 @@ public record CustomerAssetDto(
 
         LocalDate warrantyExpiry,
 
+        boolean underAmc,
+
         Integer serviceIntervalDays,
 
         LocalDate nextServiceDate,

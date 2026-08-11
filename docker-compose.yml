@@ -1,23 +1,29 @@
 services:
-  postgres:
-    image: postgres:16-alpine
-    container_name: ro_service_manager_db
-    restart: unless-stopped
-    environment:
-      POSTGRES_DB: ${POSTGRES_DB:-ro_service_manager}
-      POSTGRES_USER: ${POSTGRES_USER:-postgres}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
-    ports:
-      - "5432:5432"
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-ro_service_manager}"]
-      interval: 5s
-      timeout: 5s
-      retries: 10
-    networks:
-      - ro_service_manager_net
+  # The postgres service is disabled - the backend now points at a Postgres
+  # instance running directly on your machine instead (see the backend
+  # service's SPRING_DATASOURCE_URL below, using host.docker.internal).
+  # Uncomment this block and restore backend's `depends_on` to go back to
+  # the dockerised database.
+  #
+  # postgres:
+  #   image: postgres:16-alpine
+  #   container_name: ro_service_manager_db
+  #   restart: unless-stopped
+  #   environment:
+  #     POSTGRES_DB: ${POSTGRES_DB:-ro_service_manager}
+  #     POSTGRES_USER: ${POSTGRES_USER:-postgres}
+  #     POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+  #   ports:
+  #     - "5432:5432"
+  #   volumes:
+  #     - postgres_data:/var/lib/postgresql/data
+  #   healthcheck:
+  #     test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-ro_service_manager}"]
+  #     interval: 5s
+  #     timeout: 5s
+  #     retries: 10
+  #   networks:
+  #     - ro_service_manager_net
 
   backend:
     build:
@@ -25,15 +31,20 @@ services:
       dockerfile: Dockerfile
     container_name: ro_service_manager_backend
     restart: unless-stopped
-    depends_on:
-      postgres:
-        condition: service_healthy
     environment:
-      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB:-ro_service_manager}
+      # host.docker.internal resolves to your machine's own localhost from
+      # inside the container - that's how the backend reaches a Postgres
+      # server running natively on your machine instead of in a container.
+      SPRING_DATASOURCE_URL: jdbc:postgresql://host.docker.internal:${POSTGRES_PORT:-5432}/${POSTGRES_DB:-ro_service_manager}
       SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:-postgres}
       SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
       JWT_SECRET: ${JWT_SECRET:-odguQOy24rlTUQZrTVC/wFYG9YosV7GSppt1bEG6j6M=}
       JWT_EXPIRATION: ${JWT_EXPIRATION:-28800000}
+    extra_hosts:
+      # host.docker.internal is built into Docker Desktop (Windows/Mac) but
+      # needs this explicit mapping on native Linux Docker - harmless
+      # either way, so it's included for portability.
+      - "host.docker.internal:host-gateway"
     ports:
       - "8080:8080"
     networks:
@@ -58,5 +69,7 @@ networks:
   ro_service_manager_net:
     driver: bridge
 
-volumes:
-  postgres_data:
+# Unused while the postgres service above is commented out - restore this
+# alongside it if you switch back to the dockerised database.
+# volumes:
+#   postgres_data:

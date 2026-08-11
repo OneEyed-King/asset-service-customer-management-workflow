@@ -54,6 +54,17 @@ public class CustomerAssetController {
         return customerAssetService.getAll(pageable);
     }
 
+    @GetMapping("/due")
+    public Page<CustomerAssetDto> getDueForService(
+
+            @PageableDefault(
+                    size = ApiConstants.DEFAULT_PAGE_SIZE,
+                    sort = "nextServiceDate")
+            Pageable pageable) {
+
+        return customerAssetService.getDueForService(pageable);
+    }
+
     @GetMapping("/customer/{customerId}")
     public Page<CustomerAssetDto> getByCustomer(
 

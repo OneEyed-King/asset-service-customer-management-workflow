@@ -1,10 +1,20 @@
 import { useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { Box, Button, Chip, CircularProgress, Paper, Tab, Tabs, Typography } from "@mui/material";
-import { ArrowLeft, Mail, MapPin, Pencil, Phone, PackageSearch, Wrench, Wallet, StickyNote } from "lucide-react";
+import { ArrowLeft, Mail, MapPin, Pencil, Phone, Plus, PackageSearch, Wrench, Wallet, StickyNote } from "lucide-react";
+import { toast } from "sonner";
 import { useCustomerQuery } from "@/hooks/useCustomerQueries";
+import { useAssetsByCustomerQuery, useDeactivateAssetMutation } from "@/hooks/useAssetQueries";
+import { useServiceHistoryByCustomerQuery } from "@/hooks/useServiceHistoryQueries";
 import { CustomerFormDialog } from "@/components/dialogs/CustomerFormDialog";
+import { AssetFormDialog } from "@/components/dialogs/AssetFormDialog";
+import { ServiceHistoryFormDialog } from "@/components/dialogs/ServiceHistoryFormDialog";
+import { AssetTable } from "@/components/tables/AssetTable";
+import { ServiceHistoryTable } from "@/components/tables/ServiceHistoryTable";
+import { ConfirmDialog } from "@/components/dialogs/ConfirmDialog";
 import { ComingSoon } from "@/components/common/ComingSoon";
+import { getApiErrorMessage } from "@/api/axiosClient";
+import type { CustomerAsset } from "@/types/asset";
 
 const TABS = [
   { label: "Assets", icon: PackageSearch },
@@ -19,7 +29,48 @@ export default function CustomerDetailsPage() {
   const [activeTab, setActiveTab] = useState(0);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
 
+  const [assetPage, setAssetPage] = useState(0);
+  const [assetPageSize, setAssetPageSize] = useState(10);
+  const [assetFormDialog, setAssetFormDialog] = useState<{ mode: "create" | "edit"; asset?: CustomerAsset } | null>(
+    null
+  );
+  const [assetToDeactivate, setAssetToDeactivate] = useState<CustomerAsset | null>(null);
+  const [serviceLogAsset, setServiceLogAsset] = useState<CustomerAsset | null>(null);
+  const [serviceHistoryDialogOpen, setServiceHistoryDialogOpen] = useState(false);
+  const [serviceHistoryPage, setServiceHistoryPage] = useState(0);
+  const [serviceHistoryPageSize, setServiceHistoryPageSize] = useState(10);
+
   const { data: customer, isLoading, isError } = useCustomerQuery(customerId);
+  const { data: assetsPageData, isLoading: isLoadingAssets, isError: isAssetsError } = useAssetsByCustomerQuery(
+    customerId,
+    { page: assetPage, size: assetPageSize }
+  );
+  // Separate, larger fetch of the same customer's assets just to populate
+  // the "which asset was this?" picker in the Service History tab -
+  // independent of the Assets tab's own (smaller) pagination.
+  const { data: allAssetsForPicker } = useAssetsByCustomerQuery(customerId, { page: 0, size: 100 });
+  const {
+    data: serviceHistoryPageData,
+    isLoading: isLoadingServiceHistory,
+    isError: isServiceHistoryError,
+  } = useServiceHistoryByCustomerQuery(customerId, { page: serviceHistoryPage, size: serviceHistoryPageSize });
+  const deactivateAssetMutation = useDeactivateAssetMutation();
+
+  const handleDeactivateAssetConfirm = () => {
+    if (!assetToDeactivate) return;
+    deactivateAssetMutation.mutate(
+      { id: assetToDeactivate.id, customerId: assetToDeactivate.customerId },
+      {
+        onSuccess: () => {
+          toast.success(`${assetToDeactivate.name} deactivated`);
+          setAssetToDeactivate(null);
+        },
+        onError: (error) => {
+          toast.error(getApiErrorMessage(error, "Could not deactivate asset."));
+        },
+      }
+    );
+  };
 
   if (isLoading) {
     return (
@@ -108,14 +159,74 @@ export default function CustomerDetailsPage() {
         </Tabs>
         <Box sx={{ p: 3 }}>
           {activeTab === 0 && (
-            <ComingSoon
-              title="Asset Module Coming Next"
-              description="Customer asset tracking for this customer will be built in the next milestone."
-              icon={PackageSearch}
-            />
+            <Box>
+              <Box sx={{ display: "flex", justifyContent: "flex-end", mb: 2 }}>
+                <Button
+                  variant="contained"
+                  size="small"
+                  startIcon={<Plus size={16} />}
+                  onClick={() => setAssetFormDialog({ mode: "create" })}
+                >
+                  Add Asset
+                </Button>
+              </Box>
+              {isAssetsError ? (
+                <Typography color="error">Failed to load assets. Please try again.</Typography>
+              ) : (
+                <AssetTable
+                  assets={assetsPageData?.content ?? []}
+                  totalElements={assetsPageData?.totalElements ?? 0}
+                  page={assetPage}
+                  pageSize={assetPageSize}
+                  isLoading={isLoadingAssets}
+                  onPageChange={setAssetPage}
+                  onPageSizeChange={(size) => {
+                    setAssetPageSize(size);
+                    setAssetPage(0);
+                  }}
+                  onEdit={(asset) => setAssetFormDialog({ mode: "edit", asset })}
+                  onDeactivate={(asset) => setAssetToDeactivate(asset)}
+                  onLogService={(asset) => setServiceLogAsset(asset)}
+                />
+              )}
+            </Box>
           )}
           {activeTab === 1 && (
-            <ComingSoon title="Service History Coming Soon" icon={Wrench} />
+            <Box>
+              <Box sx={{ display: "flex", justifyContent: "flex-end", mb: 2 }}>
+                <Button
+                  variant="contained"
+                  size="small"
+                  startIcon={<Plus size={16} />}
+                  onClick={() => setServiceHistoryDialogOpen(true)}
+                  disabled={(allAssetsForPicker?.content.length ?? 0) === 0}
+                >
+                  Log Service
+                </Button>
+              </Box>
+              {(allAssetsForPicker?.content.length ?? 0) === 0 && !isLoadingAssets && (
+                <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                  Add an asset for this customer first, then you can log service visits against it.
+                </Typography>
+              )}
+              {isServiceHistoryError ? (
+                <Typography color="error">Failed to load service history. Please try again.</Typography>
+              ) : (
+                <ServiceHistoryTable
+                  entries={serviceHistoryPageData?.content ?? []}
+                  totalElements={serviceHistoryPageData?.totalElements ?? 0}
+                  page={serviceHistoryPage}
+                  pageSize={serviceHistoryPageSize}
+                  isLoading={isLoadingServiceHistory}
+                  showAssetColumn
+                  onPageChange={setServiceHistoryPage}
+                  onPageSizeChange={(size) => {
+                    setServiceHistoryPageSize(size);
+                    setServiceHistoryPage(0);
+                  }}
+                />
+              )}
+            </Box>
           )}
           {activeTab === 2 && <ComingSoon title="Payments Coming Soon" icon={Wallet} />}
           {activeTab === 3 && <ComingSoon title="Notes Coming Soon" icon={StickyNote} />}
@@ -127,6 +238,41 @@ export default function CustomerDetailsPage() {
         mode="edit"
         customer={customer}
         onClose={() => setEditDialogOpen(false)}
+      />
+
+      {assetFormDialog && (
+        <AssetFormDialog
+          open
+          mode={assetFormDialog.mode}
+          asset={assetFormDialog.asset}
+          fixedCustomer={{ id: customer.id, name: customer.name }}
+          onClose={() => setAssetFormDialog(null)}
+        />
+      )}
+
+      {assetToDeactivate && (
+        <ConfirmDialog
+          open
+          title="Deactivate asset?"
+          description={`"${assetToDeactivate.name}" will be marked inactive.`}
+          confirmLabel="Deactivate"
+          confirmColor="error"
+          loading={deactivateAssetMutation.isPending}
+          onConfirm={handleDeactivateAssetConfirm}
+          onClose={() => setAssetToDeactivate(null)}
+        />
+      )}
+
+      <ServiceHistoryFormDialog
+        open={!!serviceLogAsset}
+        asset={serviceLogAsset ?? undefined}
+        onClose={() => setServiceLogAsset(null)}
+      />
+
+      <ServiceHistoryFormDialog
+        open={serviceHistoryDialogOpen}
+        pickFromAssets={allAssetsForPicker?.content ?? []}
+        onClose={() => setServiceHistoryDialogOpen(false)}
       />
     </Box>
   );

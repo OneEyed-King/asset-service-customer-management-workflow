@@ -5,6 +5,7 @@ import { Plus, Search } from "lucide-react";
 import { toast } from "sonner";
 import { CustomerTable } from "@/components/tables/CustomerTable";
 import { CustomerFormDialog } from "@/components/dialogs/CustomerFormDialog";
+import { AssetFormDialog } from "@/components/dialogs/AssetFormDialog";
 import { ConfirmDialog } from "@/components/dialogs/ConfirmDialog";
 import { useCustomersQuery, useDeactivateCustomerMutation } from "@/hooks/useCustomerQueries";
 import { useDebouncedValue } from "@/hooks/useDebouncedValue";
@@ -21,6 +22,7 @@ export default function CustomersPage() {
 
   const [formDialog, setFormDialog] = useState<{ mode: "create" | "edit"; customer?: Customer } | null>(null);
   const [customerToDeactivate, setCustomerToDeactivate] = useState<Customer | null>(null);
+  const [assetDialogCustomer, setAssetDialogCustomer] = useState<Customer | null>(null);
 
   const queryParams = useMemo(
     () => ({ page, size: pageSize, search: debouncedSearch.trim() || undefined }),
@@ -110,6 +112,18 @@ export default function CustomersPage() {
           mode={formDialog.mode}
           customer={formDialog.customer}
           onClose={() => setFormDialog(null)}
+          onCreated={(customer, { addAsset }) => {
+            if (addAsset) setAssetDialogCustomer(customer);
+          }}
+        />
+      )}
+
+      {assetDialogCustomer && (
+        <AssetFormDialog
+          open
+          mode="create"
+          fixedCustomer={{ id: assetDialogCustomer.id, name: assetDialogCustomer.name }}
+          onClose={() => setAssetDialogCustomer(null)}
         />
       )}
 

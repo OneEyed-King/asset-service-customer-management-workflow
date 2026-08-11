@@ -17,7 +17,7 @@ export interface CustomerAsset {
   customerId: string;
   customerName: string;
   name: string;
-  brand: string;
+  brand?: string | null;
   assetType: AssetType;
   assetSource: AssetSource;
   serialNumber?: string | null;
@@ -27,10 +27,28 @@ export interface CustomerAsset {
   purchaseDate?: string | null;
   installationDate?: string | null;
   warrantyExpiry?: string | null;
+  underAmc: boolean;
   serviceIntervalDays?: number | null;
   nextServiceDate?: string | null;
   installationLocation?: string | null;
   notes?: string | null;
+}
+
+/**
+ * The minimum an asset needs to be "serviceable" - enough for the log-a-
+ * -visit form/dialog to render and suggest a next date, without requiring
+ * a full CustomerAsset fetch. A full CustomerAsset satisfies this
+ * structurally, so any screen that already has one (AssetTable) can pass
+ * it straight through; screens that only have partial data (the dashboard's
+ * upcoming list, the Services page's due list) can build this shape
+ * directly from what they already fetched instead of doing a second
+ * round-trip just to open the dialog.
+ */
+export interface ServiceableAsset {
+  id: string;
+  name: string;
+  underAmc: boolean;
+  serviceIntervalDays?: number | null;
 }
 
 /**
@@ -39,7 +57,7 @@ export interface CustomerAsset {
 export interface CustomerAssetRequest {
   customerId: string;
   name: string;
-  brand: string;
+  brand?: string;
   assetType: AssetType;
   assetSource: AssetSource;
   serialNumber?: string;
@@ -49,6 +67,7 @@ export interface CustomerAssetRequest {
   purchaseDate?: string;
   installationDate?: string;
   warrantyExpiry?: string;
+  underAmc: boolean;
   serviceIntervalDays?: number;
   nextServiceDate?: string;
   installationLocation?: string;

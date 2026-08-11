@@ -1,5 +1,7 @@
 package com.vc.roservicemanager.customer.serviceimpl;
 
+import com.vc.roservicemanager.common.exception.ApiException;
+
 import com.vc.roservicemanager.auth.security.CurrentTenantProvider;
 import com.vc.roservicemanager.customer.dto.CustomerDto;
 import com.vc.roservicemanager.customer.dto.CustomerRequest;
@@ -153,6 +155,6 @@ public class CustomerServiceImpl implements CustomerService {
     private Customer getCustomer(UUID id) {
         UUID tenantId = currentTenantProvider.getTenantId();
         return customerRepository.findByIdAndActiveTrueAndTenantId(id, tenantId)
-                .orElseThrow(() -> new RuntimeException("Customer not found"));
+                .orElseThrow(() -> ApiException.notFound("Customer not found"));
     }
 }

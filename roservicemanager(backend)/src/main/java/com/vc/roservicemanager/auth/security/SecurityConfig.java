@@ -34,6 +34,10 @@ public class SecurityConfig {
                         session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/auth/login").permitAll()
+                        // No JWT can exist for a tenant/user that doesn't exist yet - these
+                        // endpoints are gated by their own X-Platform-Admin-Key check instead
+                        // (see PlatformAdminController), not Spring Security auth.
+                        .requestMatchers("/api/platform-admin/**").permitAll()
                         .anyRequest().authenticated())
                 .authenticationProvider(authenticationProvider())
                 .addFilterBefore(jwtAuthenticationFilter,

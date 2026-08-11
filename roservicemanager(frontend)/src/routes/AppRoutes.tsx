@@ -6,6 +6,8 @@ import DashboardPage from "@/pages/DashboardPage";
 import CustomersPage from "@/pages/CustomersPage";
 import CustomerDetailsPage from "@/pages/CustomerDetailsPage";
 import AssetsPage from "@/pages/AssetsPage";
+import ServicesPage from "@/pages/ServicesPage";
+import TeamMembersPage from "@/pages/TeamMembersPage";
 import NotFoundPage from "@/pages/NotFoundPage";
 
 /**
@@ -62,6 +64,28 @@ export function AppRoutes() {
           <ProtectedRoute>
             <DashboardLayout>
               <AssetsPage />
+            </DashboardLayout>
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/services"
+        element={
+          <ProtectedRoute>
+            <DashboardLayout>
+              <ServicesPage />
+            </DashboardLayout>
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/team-members"
+        element={
+          <ProtectedRoute allowedRoles={["OWNER", "ADMIN"]}>
+            <DashboardLayout>
+              <TeamMembersPage />
             </DashboardLayout>
           </ProtectedRoute>
         }

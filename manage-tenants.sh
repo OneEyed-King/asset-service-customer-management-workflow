@@ -3,10 +3,12 @@
 # manage-tenants.sh
 #
 # Manual tenant / team-member management for the RO Service Manager,
-# until the real signup page + Razorpay billing exist. Talks to the
-# Postgres container started by docker-compose (see docker-compose.yml
-# at the repo root) via `docker exec psql`, so no local psql install
-# is required.
+# until the real signup page + Razorpay billing exist. Talks to Postgres
+# in one of two ways, controlled by DB_MODE:
+#   - DB_MODE=local  (default) - a local `psql` install, connecting to a
+#     Postgres instance running directly on your machine.
+#   - DB_MODE=docker - `docker exec psql` against the Postgres container
+#     from docker-compose.yml (only relevant if you switch back to that).
 #
 # Enforces the two rules the app itself doesn't enforce yet at the API
 # layer:
@@ -38,14 +40,31 @@
 # STATUS      : TRIAL | ACTIVE | SUSPENDED           (default: ACTIVE)
 # ROLE        : OWNER | ADMIN | TECHNICIAN
 # SEAT_LIMIT  : a number, or "-" for unlimited (NULL)
+#
+# DB connection overrides (defaults assume a local Postgres matching
+# docker-compose's fallback credentials - override any of these as env
+# vars if yours differ, e.g.:
+#   DB_PASSWORD=mysecret DB_NAME=ro_service_manager ./manage-tenants.sh list-tenants
+#
+#   DB_MODE      : local | docker              (default: local)
+#   DB_HOST      : local Postgres host          (default: localhost)
+#   DB_PORT      : local Postgres port          (default: 5432)
+#   DB_USER      : Postgres role                (default: postgres)
+#   DB_PASSWORD  : Postgres role's password     (default: postgres)
+#   DB_NAME      : database name                (default: ro_service_manager)
+#   DB_CONTAINER : container name, DB_MODE=docker only (default: ro_service_manager_db)
 
 set -euo pipefail
 
 # ---------------------------------------------------------------------------
-# Config - override via env vars if your docker-compose setup differs.
+# Config - override via env vars if your setup differs.
 # ---------------------------------------------------------------------------
-DB_CONTAINER="${DB_CONTAINER:-ro_service_manager_db}"
+DB_MODE="${DB_MODE:-local}"                 # local | docker
+DB_HOST="${DB_HOST:-localhost}"             # only used when DB_MODE=local
+DB_PORT="${DB_PORT:-5432}"                  # only used when DB_MODE=local
+DB_CONTAINER="${DB_CONTAINER:-ro_service_manager_db}"  # only used when DB_MODE=docker
 DB_USER="${DB_USER:-postgres}"
+DB_PASSWORD="${DB_PASSWORD:-postgres}"      # only used when DB_MODE=local
 DB_NAME="${DB_NAME:-ro_service_manager}"
 
 # ---------------------------------------------------------------------------
@@ -58,16 +77,30 @@ die() {
 }
 
 psql_exec() {
-    # Runs a SQL statement/query against the dockerised Postgres.
+    # Runs a SQL statement/query against Postgres.
     # -tA = tuples only, unaligned (easy to parse in bash); -v ON_ERROR_STOP=1
     # so a failed statement aborts the script instead of continuing silently.
-    docker exec -i "$DB_CONTAINER" psql -U "$DB_USER" -d "$DB_NAME" \
-        -v ON_ERROR_STOP=1 -tA "$@"
+    if [ "$DB_MODE" = "local" ]; then
+        PGPASSWORD="$DB_PASSWORD" psql -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" -d "$DB_NAME" \
+            -v ON_ERROR_STOP=1 -tA "$@"
+    else
+        docker exec -i "$DB_CONTAINER" psql -U "$DB_USER" -d "$DB_NAME" \
+            -v ON_ERROR_STOP=1 -tA "$@"
+    fi
 }
 
 require_docker_container() {
-    if ! docker ps --format '{{.Names}}' | grep -qx "$DB_CONTAINER"; then
-        die "Postgres container '$DB_CONTAINER' is not running. Start it with: docker compose up -d postgres"
+    if [ "$DB_MODE" = "local" ]; then
+        if ! command -v psql >/dev/null 2>&1; then
+            die "psql is not installed or not on PATH. Install the Postgres client tools (e.g. 'winget install PostgreSQL.PostgreSQL' or via your Postgres installer's 'Command Line Tools' component)."
+        fi
+        if ! PGPASSWORD="$DB_PASSWORD" psql -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" -d "$DB_NAME" -c '\q' >/dev/null 2>&1; then
+            die "Can't connect to Postgres at $DB_HOST:$DB_PORT as user '$DB_USER' (database '$DB_NAME'). Check that Postgres is running and DB_HOST/DB_PORT/DB_USER/DB_PASSWORD/DB_NAME are correct (override via env vars), and that the '$DB_NAME' database exists."
+        fi
+    else
+        if ! docker ps --format '{{.Names}}' | grep -qx "$DB_CONTAINER"; then
+            die "Postgres container '$DB_CONTAINER' is not running. Start it with: docker compose up -d postgres"
+        fi
     fi
 }
 

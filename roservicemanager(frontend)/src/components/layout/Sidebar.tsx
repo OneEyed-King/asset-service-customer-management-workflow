@@ -55,7 +55,9 @@ export function Sidebar() {
       </Box>
 
       <List sx={{ px: 2, flexGrow: 1 }}>
-        {NAV_ITEMS.map((item) => {
+        {NAV_ITEMS.filter(
+          (item) => !item.allowedRoles || (user && item.allowedRoles.includes(user.role))
+        ).map((item) => {
           const Icon = item.icon;
           const itemSx = {
             borderRadius: 2,
@@ -119,8 +121,8 @@ export function Sidebar() {
           <Typography variant="body2" noWrap sx={{ fontWeight: 600 }}>
             {user?.username ?? "Unknown user"}
           </Typography>
-          <Typography variant="caption" color="text.secondary">
-            Administrator
+          <Typography variant="caption" color="text.secondary" sx={{ textTransform: "capitalize" }}>
+            {user?.role?.toLowerCase() ?? "—"}
           </Typography>
         </Box>
         <Tooltip title="Sign out">

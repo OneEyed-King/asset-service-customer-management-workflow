@@ -34,6 +34,8 @@ public record CustomerAssetRequest(
 
         LocalDate warrantyExpiry,
 
+        boolean underAmc,
+
         Integer serviceIntervalDays,
 
         LocalDate nextServiceDate,

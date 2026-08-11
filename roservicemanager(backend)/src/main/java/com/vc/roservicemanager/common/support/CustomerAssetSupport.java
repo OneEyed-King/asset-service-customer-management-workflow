@@ -1,5 +1,7 @@
 package com.vc.roservicemanager.common.support;
 
+import com.vc.roservicemanager.common.exception.ApiException;
+
 import com.vc.roservicemanager.auth.security.CurrentTenantProvider;
 import com.vc.roservicemanager.customerasset.entity.CustomerAsset;
 import com.vc.roservicemanager.customerasset.repository.CustomerAssetRepository;
@@ -21,7 +23,7 @@ public class CustomerAssetSupport {
 
         return repository.findByIdAndActiveTrueAndTenantId(id, tenantId)
                 .orElseThrow(() ->
-                        new RuntimeException("Asset not found"));
+                        ApiException.notFound("Asset not found"));
     }
 
 }

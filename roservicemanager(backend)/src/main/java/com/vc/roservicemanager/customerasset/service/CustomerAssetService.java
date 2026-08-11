@@ -20,6 +20,11 @@ public interface CustomerAssetService {
             Pageable pageable
     );
 
+    // Active, under-AMC assets that have a next-due date - what the
+    // Services page's "Due & Upcoming" tab and the dashboard both draw
+    // from. Sort order is controller-driven, same convention as getAll.
+    Page<CustomerAssetDto> getDueForService(Pageable pageable);
+
     CustomerAssetDto update(
             UUID id,
             CustomerAssetRequest request
