@@ -76,6 +76,7 @@ export function ServiceHistoryTable({
               {showCustomerColumn && <TableCell>Customer</TableCell>}
               {showAssetColumn && <TableCell>Asset</TableCell>}
               <TableCell>Status</TableCell>
+              <TableCell>Charge</TableCell>
               <TableCell>Remarks</TableCell>
               <TableCell>Serviced By</TableCell>
               <TableCell>Next Due</TableCell>
@@ -99,6 +100,7 @@ export function ServiceHistoryTable({
                     color={entry.completed ? "success" : "error"}
                   />
                 </TableCell>
+                <TableCell>{entry.amountCharged != null ? `₹${entry.amountCharged}` : "—"}</TableCell>
                 <TableCell>{entry.remarks || "—"}</TableCell>
                 <TableCell>{entry.servicedByName || "—"}</TableCell>
                 <TableCell>{entry.nextServiceDate || "—"}</TableCell>

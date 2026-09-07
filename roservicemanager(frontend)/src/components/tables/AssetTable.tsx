@@ -13,7 +13,7 @@ import {
   Tooltip,
   Typography,
 } from "@mui/material";
-import { Pencil, PackageX, PackageSearch, Wrench } from "lucide-react";
+import { Pencil, PackageX, PackageSearch, ShieldCheck, Wrench } from "lucide-react";
 import type { CustomerAsset } from "@/types/asset";
 
 interface AssetTableProps {
@@ -30,6 +30,8 @@ interface AssetTableProps {
   onDeactivate: (asset: CustomerAsset) => void;
   /** Optional - omit to hide the "Log Service" quick action. */
   onLogService?: (asset: CustomerAsset) => void;
+  /** Optional - omit to hide the "Manage AMC" quick action. */
+  onManageAmc?: (asset: CustomerAsset) => void;
 }
 
 function isOverdue(nextServiceDate: string | null | undefined): boolean {
@@ -41,6 +43,7 @@ const ASSET_TYPE_LABELS: Record<CustomerAsset["assetType"], string> = {
   RO: "RO Purifier",
   CHIMNEY: "Chimney",
   AC: "AC",
+  FRIDGE: "Fridge",
   WATER_SOFTENER: "Water Softener",
   SPARE_PART: "Spare Part",
   OTHER: "Other",
@@ -64,6 +67,7 @@ export function AssetTable({
   onEdit,
   onDeactivate,
   onLogService,
+  onManageAmc,
 }: AssetTableProps) {
   if (!isLoading && assets.length === 0) {
     return (
@@ -141,6 +145,13 @@ export function AssetTable({
                       <Tooltip title="Log service">
                         <IconButton size="small" onClick={() => onLogService(asset)}>
                           <Wrench size={16} />
+                        </IconButton>
+                      </Tooltip>
+                    )}
+                    {onManageAmc && (
+                      <Tooltip title="Manage AMC contracts">
+                        <IconButton size="small" onClick={() => onManageAmc(asset)}>
+                          <ShieldCheck size={16} />
                         </IconButton>
                       </Tooltip>
                     )}

@@ -7,6 +7,7 @@ import com.vc.roservicemanager.tenant.entity.Tenant;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 
 /**
@@ -50,5 +51,10 @@ public class ServiceHistory extends BaseEntity {
     // record, but shouldn't be treated the same as a finished job.
     @Builder.Default
     private boolean completed = true;
+
+    // Null for the common case (a routine AMC visit, already covered by
+    // the contract price). Set for off-schedule/complaint visits, where
+    // the customer is billed directly for that call-out.
+    private BigDecimal amountCharged;
 
 }

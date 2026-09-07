@@ -1,7 +1,9 @@
 package com.vc.roservicemanager.servicehistory.dto;
 
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.UUID;
 
@@ -34,7 +36,15 @@ public record ServiceHistoryRequest(
          * value here reschedules the asset's due date; otherwise it's left
          * as-is (still due/overdue).
          */
-        Boolean completed
+        Boolean completed,
+
+        /**
+         * Optional - set for an off-schedule/complaint visit the customer is
+         * billed for directly. Leave null for a routine AMC visit already
+         * covered by the contract price.
+         */
+        @Positive
+        BigDecimal amountCharged
 
 ) {
 }

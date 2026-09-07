@@ -15,6 +15,7 @@ export interface ServiceHistoryEntry {
   servicedById: string | null;
   servicedByName: string | null;
   completed: boolean;
+  amountCharged: number | null;
 }
 
 /**
@@ -30,4 +31,5 @@ export interface ServiceHistoryRequest {
   nextServiceDate?: string;
   servicedById?: string;
   completed?: boolean;
+  amountCharged?: number;
 }

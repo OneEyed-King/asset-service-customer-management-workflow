@@ -3,7 +3,7 @@
  * (com.vc.roservicemanager.common.enums.*) exactly - confirmed by reading
  * the enum source files, not guessed.
  */
-export type AssetType = "RO" | "CHIMNEY" | "AC" | "WATER_SOFTENER" | "SPARE_PART" | "OTHER";
+export type AssetType = "RO" | "CHIMNEY" | "AC" | "FRIDGE" | "WATER_SOFTENER" | "SPARE_PART" | "OTHER";
 export type AssetSource = "SOLD" | "SERVICE_ONLY";
 export type PaymentStatus = "PAID" | "PARTIAL" | "UNPAID";
 

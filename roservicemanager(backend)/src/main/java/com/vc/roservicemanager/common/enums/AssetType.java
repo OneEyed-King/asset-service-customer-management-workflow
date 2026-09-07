@@ -5,6 +5,7 @@ public enum AssetType {
     RO,
     CHIMNEY,
     AC,
+    FRIDGE,
     WATER_SOFTENER,
     SPARE_PART,
     OTHER

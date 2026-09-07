@@ -4,8 +4,11 @@ import com.vc.roservicemanager.customerasset.entity.CustomerAsset;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
@@ -48,5 +51,19 @@ public interface CustomerAssetRepository
     // used everywhere else in this repository.
     Page<CustomerAsset> findByActiveTrueAndTenantIdAndUnderAmcTrueAndNextServiceDateIsNotNull(
             UUID tenantId, Pageable pageable);
+
+    // Feeds the customer ledger summary's "total charges" figure - only
+    // SOLD assets represent a charge; a SERVICE_ONLY asset (one we didn't
+    // sell) has no purchase price to speak of. COALESCE keeps this a plain
+    // 0 (not null) when a customer has no sold assets.
+    @Query("""
+            SELECT COALESCE(SUM(a.purchasePrice), 0)
+            FROM CustomerAsset a
+            WHERE a.tenant.id = :tenantId
+              AND a.customer.id = :customerId
+              AND a.assetSource = com.vc.roservicemanager.common.enums.AssetSource.SOLD
+              AND a.purchasePrice IS NOT NULL
+            """)
+    BigDecimal sumPurchasePriceByCustomer(@Param("tenantId") UUID tenantId, @Param("customerId") UUID customerId);
 
 }

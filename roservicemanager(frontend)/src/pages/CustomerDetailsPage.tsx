@@ -9,8 +9,11 @@ import { useServiceHistoryByCustomerQuery } from "@/hooks/useServiceHistoryQueri
 import { CustomerFormDialog } from "@/components/dialogs/CustomerFormDialog";
 import { AssetFormDialog } from "@/components/dialogs/AssetFormDialog";
 import { ServiceHistoryFormDialog } from "@/components/dialogs/ServiceHistoryFormDialog";
+import { AmcContractDialog } from "@/components/dialogs/AmcContractDialog";
+import { PaymentFormDialog } from "@/components/dialogs/PaymentFormDialog";
 import { AssetTable } from "@/components/tables/AssetTable";
 import { ServiceHistoryTable } from "@/components/tables/ServiceHistoryTable";
+import { CustomerLedgerCard } from "@/components/common/CustomerLedgerCard";
 import { ConfirmDialog } from "@/components/dialogs/ConfirmDialog";
 import { ComingSoon } from "@/components/common/ComingSoon";
 import { getApiErrorMessage } from "@/api/axiosClient";
@@ -39,6 +42,8 @@ export default function CustomerDetailsPage() {
   const [serviceHistoryDialogOpen, setServiceHistoryDialogOpen] = useState(false);
   const [serviceHistoryPage, setServiceHistoryPage] = useState(0);
   const [serviceHistoryPageSize, setServiceHistoryPageSize] = useState(10);
+  const [amcAsset, setAmcAsset] = useState<CustomerAsset | null>(null);
+  const [paymentDialogOpen, setPaymentDialogOpen] = useState(false);
 
   const { data: customer, isLoading, isError } = useCustomerQuery(customerId);
   const { data: assetsPageData, isLoading: isLoadingAssets, isError: isAssetsError } = useAssetsByCustomerQuery(
@@ -187,6 +192,7 @@ export default function CustomerDetailsPage() {
                   onEdit={(asset) => setAssetFormDialog({ mode: "edit", asset })}
                   onDeactivate={(asset) => setAssetToDeactivate(asset)}
                   onLogService={(asset) => setServiceLogAsset(asset)}
+                  onManageAmc={(asset) => setAmcAsset(asset)}
                 />
               )}
             </Box>
@@ -228,7 +234,9 @@ export default function CustomerDetailsPage() {
               )}
             </Box>
           )}
-          {activeTab === 2 && <ComingSoon title="Payments Coming Soon" icon={Wallet} />}
+          {activeTab === 2 && (
+            <CustomerLedgerCard customerId={customer.id} onRecordPayment={() => setPaymentDialogOpen(true)} />
+          )}
           {activeTab === 3 && <ComingSoon title="Notes Coming Soon" icon={StickyNote} />}
         </Box>
       </Paper>
@@ -273,6 +281,15 @@ export default function CustomerDetailsPage() {
         open={serviceHistoryDialogOpen}
         pickFromAssets={allAssetsForPicker?.content ?? []}
         onClose={() => setServiceHistoryDialogOpen(false)}
+      />
+
+      <AmcContractDialog open={!!amcAsset} asset={amcAsset} onClose={() => setAmcAsset(null)} />
+
+      <PaymentFormDialog
+        open={paymentDialogOpen}
+        customer={{ id: customer.id, name: customer.name }}
+        assetOptions={allAssetsForPicker?.content ?? []}
+        onClose={() => setPaymentDialogOpen(false)}
       />
     </Box>
   );

@@ -1,4 +1,4 @@
-import { useForm, Controller } from "react-hook-form";
+import { useForm, Controller, type Resolver } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Grid, MenuItem, TextField, ToggleButton, ToggleButtonGroup, Typography } from "@mui/material";
@@ -14,6 +14,13 @@ const serviceHistorySchema = z
     remarks: z.string().max(1000, "Remarks are too long").optional().or(z.literal("")),
     nextServiceDate: z.string().optional().or(z.literal("")),
     servicedById: z.string().optional().or(z.literal("")),
+    // Most routine AMC visits aren't charged separately (covered by the
+    // contract), so this stays optional/blank in the common case - only
+    // filled in when this particular visit is being billed directly.
+    amountCharged: z.preprocess(
+      (val) => (val === "" || val === undefined || val === null ? undefined : Number(val)),
+      z.number().positive("Must be a positive amount").optional()
+    ),
   })
   .superRefine((values, ctx) => {
     // A "not completed" visit is worth nothing on its own without saying
@@ -65,13 +72,17 @@ export function ServiceHistoryForm({ formId, asset, onSubmit }: ServiceHistoryFo
     watch,
     formState: { errors },
   } = useForm<ServiceHistoryFormValues>({
-    resolver: zodResolver(serviceHistorySchema),
+    // See AssetForm.tsx for why this cast is needed - zodResolver's type
+    // overloads can't always settle on one branch when a schema combines
+    // z.preprocess() numeric fields with other optional fields.
+    resolver: zodResolver(serviceHistorySchema) as Resolver<ServiceHistoryFormValues>,
     defaultValues: {
       serviceDate: todayIsoDate(),
       completed: true,
       remarks: "",
       nextServiceDate: "",
       servicedById: "",
+      amountCharged: undefined,
     },
   });
 
@@ -97,6 +108,7 @@ export function ServiceHistoryForm({ formId, asset, onSubmit }: ServiceHistoryFo
       remarks: values.remarks?.trim() || undefined,
       nextServiceDate: values.nextServiceDate || undefined,
       servicedById: values.servicedById || undefined,
+      amountCharged: values.amountCharged,
     };
     onSubmit(payload);
   });
@@ -159,6 +171,17 @@ export function ServiceHistoryForm({ formId, asset, onSubmit }: ServiceHistoryFo
             }
             error={!!errors.nextServiceDate}
             {...register("nextServiceDate")}
+          />
+        </Grid>
+        <Grid size={12}>
+          <TextField
+            label="Amount Charged (optional)"
+            type="number"
+            fullWidth
+            placeholder="Leave blank if covered by AMC / not billed separately"
+            error={!!errors.amountCharged}
+            helperText={errors.amountCharged?.message}
+            {...register("amountCharged")}
           />
         </Grid>
         <Grid size={12}>

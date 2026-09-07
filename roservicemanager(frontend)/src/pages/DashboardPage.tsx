@@ -1,10 +1,11 @@
 import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Box, Chip, Grid, Paper, Skeleton, Typography } from "@mui/material";
-import { AlertTriangle, CalendarClock, PackageSearch, ShieldCheck, Users } from "lucide-react";
+import { Box, Button, Chip, Grid, Paper, Skeleton, Typography } from "@mui/material";
+import { AlertTriangle, CalendarClock, PackageSearch, PhoneCall, ShieldCheck, Users } from "lucide-react";
 import { useDashboardSummaryQuery } from "@/hooks/useDashboardQueries";
 import { DueServiceList, DueServiceListCard, type DueServiceItem } from "@/components/common/DueServiceList";
 import { ServiceHistoryFormDialog } from "@/components/dialogs/ServiceHistoryFormDialog";
+import { RecordVisitDialog } from "@/components/dialogs/RecordVisitDialog";
 import type { ServiceableAsset } from "@/types/asset";
 
 interface StatCardProps {
@@ -52,6 +53,7 @@ export default function DashboardPage() {
   const navigate = useNavigate();
   const { data, isLoading, isError } = useDashboardSummaryQuery();
   const [logServiceAsset, setLogServiceAsset] = useState<ServiceableAsset | null>(null);
+  const [recordVisitOpen, setRecordVisitOpen] = useState(false);
 
   const dueItems: DueServiceItem[] = useMemo(
     () =>
@@ -81,13 +83,22 @@ export default function DashboardPage() {
 
   return (
     <Box>
-      <Box sx={{ mb: 3 }}>
-        <Typography variant="h5" sx={{ fontWeight: 700 }}>
-          Dashboard
-        </Typography>
-        <Typography variant="body2" color="text.secondary">
-          A quick look at your customers, assets, and what needs service.
-        </Typography>
+      <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 2, mb: 3, flexWrap: "wrap" }}>
+        <Box>
+          <Typography variant="h5" sx={{ fontWeight: 700 }}>
+            Dashboard
+          </Typography>
+          <Typography variant="body2" color="text.secondary">
+            A quick look at your customers, assets, and what needs service.
+          </Typography>
+        </Box>
+        <Button
+          variant="contained"
+          startIcon={<PhoneCall size={18} />}
+          onClick={() => setRecordVisitOpen(true)}
+        >
+          Record Service / Complaint Visit
+        </Button>
       </Box>
 
       {isError ? (
@@ -211,6 +222,8 @@ export default function DashboardPage() {
         asset={logServiceAsset ?? undefined}
         onClose={() => setLogServiceAsset(null)}
       />
+
+      <RecordVisitDialog open={recordVisitOpen} onClose={() => setRecordVisitOpen(false)} />
     </Box>
   );
 }

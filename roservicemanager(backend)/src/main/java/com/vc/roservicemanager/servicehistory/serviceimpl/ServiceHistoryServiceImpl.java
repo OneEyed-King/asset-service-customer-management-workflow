@@ -89,6 +89,7 @@ public class ServiceHistoryServiceImpl implements ServiceHistoryService {
                 .nextServiceDate(nextServiceDate)
                 .servicedBy(servicedBy)
                 .completed(completed)
+                .amountCharged(request.amountCharged())
                 .build();
 
         ServiceHistory saved = serviceHistoryRepository.save(serviceHistory);
@@ -165,7 +166,8 @@ public class ServiceHistoryServiceImpl implements ServiceHistoryService {
                 serviceHistory.getNextServiceDate(),
                 servicedBy != null ? servicedBy.getId() : null,
                 servicedBy != null ? servicedBy.getFullName() : null,
-                serviceHistory.isCompleted()
+                serviceHistory.isCompleted(),
+                serviceHistory.getAmountCharged()
         );
     }
 

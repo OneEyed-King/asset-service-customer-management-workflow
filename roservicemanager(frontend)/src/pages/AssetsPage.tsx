@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { AssetTable } from "@/components/tables/AssetTable";
 import { AssetFormDialog } from "@/components/dialogs/AssetFormDialog";
 import { ServiceHistoryFormDialog } from "@/components/dialogs/ServiceHistoryFormDialog";
+import { AmcContractDialog } from "@/components/dialogs/AmcContractDialog";
 import { ConfirmDialog } from "@/components/dialogs/ConfirmDialog";
 import { useAssetsQuery, useDeactivateAssetMutation } from "@/hooks/useAssetQueries";
 import { getApiErrorMessage } from "@/api/axiosClient";
@@ -17,6 +18,7 @@ export default function AssetsPage() {
   const [formDialog, setFormDialog] = useState<{ mode: "create" | "edit"; asset?: CustomerAsset } | null>(null);
   const [assetToDeactivate, setAssetToDeactivate] = useState<CustomerAsset | null>(null);
   const [serviceLogAsset, setServiceLogAsset] = useState<CustomerAsset | null>(null);
+  const [amcAsset, setAmcAsset] = useState<CustomerAsset | null>(null);
 
   const { data, isLoading, isError } = useAssetsQuery({ page, size: pageSize });
   const deactivateMutation = useDeactivateAssetMutation();
@@ -71,6 +73,7 @@ export default function AssetsPage() {
           onEdit={(asset) => setFormDialog({ mode: "edit", asset })}
           onDeactivate={(asset) => setAssetToDeactivate(asset)}
           onLogService={(asset) => setServiceLogAsset(asset)}
+          onManageAmc={(asset) => setAmcAsset(asset)}
         />
       )}
 
@@ -79,6 +82,8 @@ export default function AssetsPage() {
         asset={serviceLogAsset ?? undefined}
         onClose={() => setServiceLogAsset(null)}
       />
+
+      <AmcContractDialog open={!!amcAsset} asset={amcAsset} onClose={() => setAmcAsset(null)} />
 
       {formDialog && (
         <AssetFormDialog
